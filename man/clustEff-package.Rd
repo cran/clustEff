@@ -11,7 +11,7 @@ This package implements a general algorithm to cluster coefficient functions (i.
 \tabular{ll}{
 Package: \tab clustEff\cr
 Type: \tab Package\cr
-Version: \tab 0.1.0\cr
+Version: \tab 0.1.1\cr
 Date: \tab 2017-09-26\cr
 License: \tab GPL-2\cr
 }

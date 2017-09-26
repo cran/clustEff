@@ -8,8 +8,8 @@ Produces a dendrogram, a cluster plot and a boxplot of average distance cluster
 class \dQuote{\code{piqr}}.
 }
 \usage{
-\method{plot}{clustEff}(x, xvar=c("clusters", "dendrogram", "boxplot"), which, add=FALSE, all=FALSE,
-                        polygon=TRUE, \ldots)
+\method{plot}{clustEff}(x, xvar=c("clusters", "dendrogram", "boxplot"), which,
+        add=FALSE, all=FALSE, polygon=TRUE, dissimilarity=TRUE, \ldots)
 }
 \arguments{
   \item{x}{An object of class \dQuote{\code{clustEdd}}, typically the result of a call to \code{\link{clustEff}}.}
@@ -21,7 +21,8 @@ class \dQuote{\code{piqr}}.
   \item{which}{If missing all curves effect are plotted.}
   \item{add}{If TRUE and xvar="clusters", a unique plot of clusters is done.}
   \item{all}{If TRUE and add=FALSE and xvar="clusters", a unique window of clusters is done.}
-  \item{polygon}{If TRUE confidence intervals are represented by shaded areas via polygon. Otherwise, dashed                  lines are used..}
+  \item{polygon}{If TRUE confidence intervals are represented by shaded areas via polygon. Otherwise, dashed lines are used.}
+  \item{dissimilarity}{If TRUE dissimilarity measure within each cluster is used to do boxplot representation.}
   \item{\ldots}{additional graphical parameters, that can include \kbd{xlim, ylim, xlab, ylab, col, lwd, lty}. See \code{\link{par}}.}
 }
 \details{

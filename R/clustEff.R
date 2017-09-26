@@ -367,7 +367,7 @@ print.summary.clustEff <- function(x, digits=max(3L, getOption("digits") - 3L), 
 
 #' @export
 plot.clustEff <- function(x, xvar=c("clusters", "dendrogram", "boxplot"), which, add=FALSE,
-                          all=FALSE, polygon=TRUE, ...){
+                          all=FALSE, polygon=TRUE, dissimilarity=TRUE, ...){
   xvar = match.arg(xvar)
   if(!missing(which)){
     if(any(which <= 0) | any(which > x$k)){
@@ -483,15 +483,17 @@ plot.clustEff <- function(x, xvar=c("clusters", "dendrogram", "boxplot"), which,
            },
          "boxplot"={
            tabClust <- table(x$clusters)
+           X <- if(dissimilarity) x$X.mean.diss else x$X.mean.dist
 
            if(is.null(L$main)) L$main <- "Average cluster distance"
            if(is.null(L$labels)) L$labels <- as.integer(names(tabClust))[tabClust > 1]
            if(is.null(L$ylab)) L$ylab <- "Distance"
            if(is.null(L$ylim)) L$ylim <- c(0, 1)
+           if(!dissimilarity) L$ylim <- c(0, max(unlist(X)))
 
            # par(mfrow=c(1,1))
-           if(length(x$X.mean.dist) > 0){
-             boxplot(x$X.mean.dist, names=L$labels, ylim=c(0,1), main=L$main, ylab=L$ylab)
+           if(length(X) > 0){
+             boxplot(X, names=L$labels, ylim=L$ylim, main=L$main, ylab=L$ylab)
            }
          })
 }
