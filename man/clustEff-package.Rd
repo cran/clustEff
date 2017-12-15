@@ -11,8 +11,8 @@ This package implements a general algorithm to cluster coefficient functions (i.
 \tabular{ll}{
 Package: \tab clustEff\cr
 Type: \tab Package\cr
-Version: \tab 0.1.1\cr
-Date: \tab 2017-09-26\cr
+Version: \tab 0.1.2\cr
+Date: \tab 2017-12-15\cr
 License: \tab GPL-2\cr
 }
 The function \code{\link{clustEff}} allows to specify the type of the curves to apply the proposed clustering algorithm. The function \code{\link{extract.object}}  extracts the matrices, in case of multivariate response, through the quantile regression coefficient modeling, useful to run the main algorithm.  The auxiliary functions \code{\link{summary.clustEff}} and \code{\link{plot.clustEff}}
@@ -74,7 +74,7 @@ for(i in 1:15){
 XX <- extract.object(Y, X, intercept=TRUE, formula.p= ~ I(p) + I(p^2) + I(p^3))
 seqP <- XX$p
 
-obj <- clustEff(XX$X$X1, seqP, Beta.lower=XX$Xl$X1, Beta.upper=XX$Xr$X1)
+obj <- clustEff(XX$X$X1, Beta.lower=XX$Xl$X1, Beta.upper=XX$Xr$X1)
 summary(obj)
 plot(obj, xvar="clusters", add=TRUE)
 par(mfrow=c(1,3));plot(obj, xvar="clusters", add=FALSE);par(mfrow=c(1,1))
@@ -82,7 +82,7 @@ plot(obj, xvar="dendrogram")
 plot(obj, xvar="boxplot")
 
 \dontrun{
-obj2 <- clustEff(XX$X$X2, seqP, Beta.lower=XX$Xl$X2, Beta.upper=XX$Xr$X2)
+obj2 <- clustEff(XX$X$X2, Beta.lower=XX$Xl$X2, Beta.upper=XX$Xr$X2)
 summary(obj2)
 plot(obj2, xvar="clusters", add=TRUE)
 par(mfrow=c(1,3));plot(obj2, xvar="clusters", add=FALSE);par(mfrow=c(1,1))
@@ -136,7 +136,7 @@ for(i in 2:dim(coef(XX))[1]){
   Xr[, (i-1)] <- predObj[[i]][, 5]
 }
 
-obj <- clustEff(X2, seqP, Beta.lower=Xl, Beta.upper=Xr)
+obj <- clustEff(X2, Beta.lower=Xl, Beta.upper=Xr)
 summary(obj)
 plot(obj, xvar="clusters", add=TRUE)
 par(mfrow=c(1,3));plot(obj, xvar="clusters", add=FALSE);par(mfrow=c(1,1))
@@ -166,7 +166,7 @@ for(i in 24:28) Y[, i] <- mu + rnorm(length(x), 0, pmax(sigma2, 0))
 mu <- 0 #sin(1/3*pi*x)*cos(2*pi*x)
 for(i in 29:30) Y[, i] <- mu + rnorm(length(x), 0, pmax(sigma2, 0))
 
-obj2 <- clustEff(Y, x, cluster.effects=FALSE)
+obj2 <- clustEff(Y, cluster.effects=FALSE)
 summary(obj2)
 plot(obj2, xvar="clusters", add=TRUE)
 par(mfrow=c(2,2));plot(obj2, xvar="clusters", add=FALSE);par(mfrow=c(1,1))

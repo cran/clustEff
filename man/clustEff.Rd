@@ -8,55 +8,52 @@ This function implements the algorithm to cluster curves of effects obtained fro
 quantile regression (qrcm; Frumento and Bottai, 2015) in which the coefficients are described by flexible parametric functions of the order of the quantile. This algorithm can be also used for clustering of curves observed in time, as in functional data analysis.
 }
 \usage{
-clustEff(Beta, p, alpha, k, ask=FALSE, k.min=1, k.max=min(10, (ncol(Beta)-1)),
-        cluster.effects=TRUE, Beta.lower=NULL, Beta.upper=NULL,
-        step=c("both", "shape", "distance"), plot=TRUE, approx.spline=FALSE, nbasis=50,
-        method="ward.D2")
+clustEff(Beta, k, alpha, cluster.effects=TRUE, step=c("both", "shape", "distance"),
+         k.max=min(10, (ncol(Beta)-1)), Beta.lower=NULL, Beta.upper=NULL,
+         ask=FALSE, approx.spline=FALSE, nbasis=50, method="ward.D2",
+         plot=TRUE, trace=TRUE)
 }
 \arguments{
   \item{Beta}{
     A matrix \kbd{n} x \kbd{q}. \kbd{q} represents the number of curves to cluster and \kbd{n} is either the length of percentiles used in the quantile regression or the length of the time vector.
   }
-  \item{p}{
-    The percentiles used in the quantile regression or the vector of time.
+    \item{k}{
+    If fixed, it represents the number of clusters.
   }
   \item{alpha}{
     It is the alpha-percentile used for computing the dissimilarity matrix. If not fixed, the algorithm choose alpha=.25 (cluster.effects=TRUE) or alpha=.5 (cluster.effects=FALSE).
   }
-  \item{k}{
-    If fixed, it represents the number of clusters.
-  }
-  \item{ask}{
-    If TRUE, after plotting the dendrogram, the user make is own choice about how many cluster to use.
-  }
-  \item{k.min}{
-    The minimum number of clusters to let the algorithm to choose the best.
+    \item{cluster.effects}{
+    If TRUE, it selects the framework (quantile regression or curves clustering) in which to apply the clustering algorithm. }
+      \item{step}{
+    The steps used in computing the dissimilarity matrix. Default is "both"=("shape" and  "distance")
   }
   \item{k.max}{
     The maximum number of clusters to let the algorithm to choose the best.
   }
-  \item{cluster.effects}{
-    If TRUE, it selects the framework (quantile regression or curves clustering) in which to apply the clustering algorithm. }
   \item{Beta.lower}{
     A matrix \kbd{n} x \kbd{q}. \kbd{q} represents the number of lower interval of the   curves to cluster and \kbd{n} the length of percentiles used in quantile regression. Used only if cluster.effects=TRUE.
   }
   \item{Beta.upper}{
     A matrix \kbd{n} x \kbd{q}. \kbd{q} represents the number of upper interval of the curves to cluster and \kbd{n} the length of percentiles used in quantile regression. Used only if cluster.effects=TRUE.
   }
-  \item{step}{
-    The steps used in computing the dissimilarity matrix. Default is "both"=("shape" and  "distance")
+  \item{ask}{
+    If TRUE, after plotting the dendrogram, the user make is own choice about how many cluster to use.
   }
-  \item{plot}{
-    If TRUE, dendrogram, boxplot and clusters are plotted.
-  }
-  \item{approx.spline}{
+    \item{approx.spline}{
     If TRUE, Beta is approximated by a smooth spline.
   }
   \item{nbasis}{
     An integer variable specifying the number of basis functions. Only when approx.spline=TRUE
   }
-  \item{method}{
+    \item{method}{
     The agglomeration method to be used.
+  }
+  \item{plot}{
+    If TRUE, dendrogram, boxplot and clusters are plotted.
+  }
+  \item{trace}{
+    If TRUE, some informations are printed.
   }
 }
 \details{
@@ -81,7 +78,6 @@ An object of class \dQuote{\code{clustEff}}, a list containing the following ite
 \item{oggSilhouette}{An object of class \dQuote{\code{silhouette}}.}
 \item{oggHclust}{An object of class \dQuote{\code{hclust}}.}
 \item{clusters}{The vector of clusters.}
-\item{alpha.dist}{The vector of alpha-distances corresponding to the alpha-percentile of the distances along the percentiles.}
 \item{distance}{A vector of goodness measures used to select the best number of clusters.}
 \item{step}{The selected step.}
 \item{method}{The used agglomeration method.}

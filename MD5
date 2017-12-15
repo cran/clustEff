@@ -1,9 +1,10 @@
-5fccc05510dde9fea71771af8c4804ec *DESCRIPTION
-ca180c72e4e7bd94689ac70879f84ef8 *NAMESPACE
-aee6abc379d23e8817784554c58daea9 *R/clustEff.R
+85bb002ad4f54a35781500933ed19e1d *DESCRIPTION
+b255ac2c0cf168008663cb49fb7b08ed *NAMESPACE
+3c03aa1a4ea4f500ab7603fbbec3808c *R/clustEff.R
 6bc726ed55c28ce69bfad3d8ecfd13f7 *man/clustEff-internal.Rd
-21222934b70dc5902ddb469b8cc5a7f9 *man/clustEff-package.Rd
-8f193d1b239818a9a625a3959037b937 *man/clustEff.Rd
+5ce4d0d69904319b7788663881978de6 *man/clustEff-package.Rd
+7189890f6ed43122df1c83eef8ec5e5f *man/clustEff.Rd
+46a62f70b790ab58757ba8c0497f98ce *man/distshape.Rd
 2189cd273f1a136cdf9264323638fa63 *man/extract.object.Rd
-66e9478b14976643a303e18f6085b817 *man/plot.clustEff.Rd
+1a2df2f81605fe136fe6a9060bb37769 *man/plot.clustEff.Rd
 90e5c336d45a357e0c86e181dc87b1c3 *man/summary.clustEff.Rd

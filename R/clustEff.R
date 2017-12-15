@@ -1,5 +1,5 @@
 #' @importFrom grDevices n2mfrow rainbow gray.colors adjustcolor
-#' @importFrom graphics abline boxplot lines matlines matplot par plot polygon points
+#' @importFrom graphics abline boxplot lines matlines matplot par plot polygon points axis mtext
 #' @importFrom utils menu combn txtProgressBar setTxtProgressBar getFromNamespace tail
 #' @importFrom stats as.dist cutree hclust model.matrix predict quantile splinefun terms
 #' @importFrom fda create.bspline.basis Data2fd eval.fd int2Lfd
@@ -8,14 +8,16 @@
 # clusters of effects in pseudo multi-type response model: applications and theory
 
 #' @export
-clustEff <- function(Beta, p, alpha, k, ask=FALSE, k.min=1, k.max=min(10, (ncol(Beta)-1)),
-                     cluster.effects=TRUE, Beta.lower=NULL, Beta.upper=NULL,
-                     step=c("both", "shape", "distance"), plot=TRUE, approx.spline=FALSE, nbasis=50,
-                     method="ward.D2"){
+clustEff <- function(Beta, k, alpha, cluster.effects=TRUE, step=c("both", "shape", "distance"),
+                     k.max=min(10, (ncol(Beta)-1)), Beta.lower=NULL, Beta.upper=NULL,
+                     ask=FALSE, approx.spline=FALSE, nbasis=50, method="ward.D2",
+                     plot=TRUE, trace=TRUE){
 
+  k.min <- 1
   if(!is.matrix(Beta)) Beta <- as.matrix(Beta)
   n <- nrow(Beta)
   q <- ncol(Beta)
+  p <- 1:n/n
   if(ncol(Beta) < 2) stop("At least two curves to use this procedure!")
   cut.method <- if(cluster.effects) "length" else "mindist"
   if(!is.null(Beta.lower) & !is.null(Beta.lower) & cluster.effects) cut.method <- "conf.int"
@@ -30,7 +32,6 @@ clustEff <- function(Beta, p, alpha, k, ask=FALSE, k.min=1, k.max=min(10, (ncol(
   }else{
     if(alpha < 0 | alpha > 1) stop("alpha must be in (0,1)!")
   }
-  if(missing(p)) p <- 1:n/n
   if(approx.spline){
     splines <- create.bspline.basis(rangeval=range(p), nbasis=nbasis, norder=4)
     fd <- Data2fd(Beta, argvals=p, basisobj=splines)
@@ -47,70 +48,34 @@ clustEff <- function(Beta, p, alpha, k, ask=FALSE, k.min=1, k.max=min(10, (ncol(
 
   rangeBeta <- range(Beta)
   lenP <- length(p)
-  METHODS <- c("ward.D", "single", "complete", "average", "mcquitty",
-               "median", "centroid", "ward.D2")
+  METHODS <- c("ward.D", "single", "complete", "average", "mcquitty", "median", "centroid", "ward.D2")
   i.meth <- pmatch(method, METHODS)
   if(is.na(i.meth)) stop("invalid clustering method", paste("", method), "\n use one of this methods:", paste("", METHODS))
   if(i.meth == -1) stop("ambiguous clustering method", paste("", method))
-  step <- match.arg(step)
-  id <- combn(1:q, 2)
-  mat <- matrix(NA, q, q)
-  matDist <- matrix(NA, ncol(id), lenP)
-  alphaDist <- NULL
-  # BetaScale <- scale(Beta)
+
   distance <- vector(length=max(1, length(k.min:k.max)))
   BetaUpper <- BetaLower <- NULL
 
-  cat("\nStep 1 (calculating alpha-percentiles): \n", sep="")
-  if(step != "shape"){
-    pb <- txtProgressBar(min=0, max=ncol(id), style=3)
-    for(i in 1:ncol(id)){
-      setTxtProgressBar(pb, i)
-      s11 <- Beta[, id[1, i]]
-      s22 <- Beta[, id[2, i]]
-      matDist[i, ] <- abs(s11-s22)
-    }
-    alphaDist <- apply(matDist, 2, function(.x) quantile(.x, alpha))
-  }else{
-    pb <- txtProgressBar(min=0, max=1, style=3)
-    setTxtProgressBar(pb, 1)
-  }
-  close(pb)
+  mat <- distshape(Beta, alpha, step, trace)
 
-  cat("Step 2 (calculating dissimilarity matrix): \n", sep="")
-  pb <- txtProgressBar(min=0, max=ncol(id), style=3)
-  for(i in 1:ncol(id)){
-    setTxtProgressBar(pb, i)
-    if(step != "distance"){
-      s1 <- splinefun(p, Beta[, id[1, i]])
-      s2 <- splinefun(p, Beta[, id[2, i]])
-      tem <- 1*I(sign(s1(p, deriv=2))*sign(s2(p, deriv=2)) == 1)
-      if(step != "both") tem2 <- 0
-    }
-
-    if(step != "shape"){
-      tem2 <- 1*I(matDist[i, ] <= alphaDist)
-      if(step != "both") tem <- 0
-    }
-
-    mat[id[1, i], id[2, i]] <- switch(step,
-                                      "both"=mean(tem & tem2),#mean(tem)*mean(tem2),#mean(tem & tem2),
-                                      "distance"=mean(tem2),
-                                      "shape"=mean(tem))
-  }
-  close(pb)
-
-  mat <- 1-as.dist(t(mat))
   ogg <- hclust(mat, method=method)
   if(q != 2){
-    if(plot) par(mfrow=c(2, 2)) else par(mfrow=c(1, 1))
-    plot(ogg, main="", xlab="", ann=TRUE, sub="")
+    if(plot){
+      par(mar=c(4,3.3,1.5,1.5)+.1)
+      par(mfrow=c(2, 2))
+    }else{
+      par(mar=c(4.3,3,1.5,1.5)+.1)
+      par(mfrow=c(1, 1))
+    }
+    plot(ogg, main="", xlab="", ylab="", ann=TRUE, sub="")
+    mtext(side=2, line=2, text="Height")
   }else{
     if(plot) par(mfrow=c(2, 1))
     k <- 2
   }
-
-  if(missing(k)){
+  if(!missing(k)){
+    pick <- k
+  }else{
     if(ask){
       pick <- 1
       while(pick > 0 && pick < (q+1)){
@@ -121,12 +86,12 @@ clustEff <- function(Beta, p, alpha, k, ask=FALSE, k.min=1, k.max=min(10, (ncol(
         if(pick == 0) stop("Cluster algorithm aborted!!!")
       }
     }else{
-      cat("Step 3 (choosing the optimal number of clusters): \n", sep="")
+      if(trace) cat("Step 3 (choosing the optimal number of clusters): \n", sep="")
       pick <- switch(cut.method,
                      "mindist"={
-                       pb <- txtProgressBar(min=0, max=max(1, k.max-k.min), style=3)
+                       if(trace) pb <- txtProgressBar(min=0, max=max(1, k.max-k.min), style=3)
                        for(pick in k.min:k.max){
-                         setTxtProgressBar(pb, pick)
+                         if(trace) setTxtProgressBar(pb, pick)
 
                          oc <- cutree(ogg, k=pick)
                          num.clust <- length(unique(oc))
@@ -138,13 +103,13 @@ clustEff <- function(Beta, p, alpha, k, ask=FALSE, k.min=1, k.max=min(10, (ncol(
                          #     tempcont <- c(tempcont, 1)
                          #   }else{
                          #     tempid <- combn(which(oc == .i), 2)
-                         #     for(i in 1:ncol(tempid)) tempcont <- c(tempcont, 1-as.matrix(mat)[tempid[1, i], tempid[2, i]])
+                         #     for(i in 1:ncol(tempid)) tempcont <- c(tempcont, as.matrix(mat)[tempid[1, i], tempid[2, i]])
                          #     # mean(tempcont)
                          #   }
                          #   mean(tempcont)
                          # })
                          #
-                         # distance[pick] <- mean(BetaDistMedio)
+                         # distance[pick] <- max(BetaDistMedio)
 
                          BetaMedio <- matrix(NA, nrow=lenP, ncol=num.clust)
                          BetaMedio[, 1] <- apply(as.matrix(Beta[, which(oc == 1)]), 1, mean)
@@ -163,18 +128,19 @@ clustEff <- function(Beta, p, alpha, k, ask=FALSE, k.min=1, k.max=min(10, (ncol(
                            # 1-colM/max(colM)}, simplify=FALSE)
 
                          # distance[pick] <- max(unlist(lapply(BetaDistMedio, function(.x) max(.x[-which.min(.x)]))))
-                         distance[pick] <- max(unlist(lapply(BetaDistMedio, function(.x) max(.x))))
+                         distance[pick] <- max(unlist(lapply(BetaDistMedio, function(.x) mean(.x))))
                        }
-                       close(pb)
-
+                       if(trace) close(pb)
+# browser()
                        names(distance) <- k.min:k.max
-                       if(distance[1] > 1.5*distance[2]) distance <- distance[-1]
+                       distance <- distance*k.min:k.max
+                       # if(distance[1] > 1.5*distance[2]) distance <- distance[-1]
 
                        tempIndex2 <- which.min(diff(distance))
                        as.integer(names(tempIndex2))},
                      "length"={
-                       pb <- txtProgressBar(min=0, max=1, style=3)
-                       setTxtProgressBar(pb, 1)
+                       if(trace) pb <- txtProgressBar(min=0, max=1, style=3)
+                       if(trace) setTxtProgressBar(pb, 1)
                        distance <- diff(rev(ogg$height))
                        close(pb)
 
@@ -184,9 +150,9 @@ clustEff <- function(Beta, p, alpha, k, ask=FALSE, k.min=1, k.max=min(10, (ncol(
 
                        as.integer(names(tempIndex2))},
                      "conf.int"={
-                       pb <- txtProgressBar(min=0, max=max(1, k.max-k.min), style=3)
+                       if(trace) pb <- txtProgressBar(min=0, max=max(1, k.max-k.min), style=3)
                        for(pick in k.min:k.max){
-                         setTxtProgressBar(pb, pick)
+                         if(trace) setTxtProgressBar(pb, pick)
 
                          oc <- cutree(ogg, k=pick)
                          num.clust <- length(unique(oc))
@@ -200,24 +166,25 @@ clustEff <- function(Beta, p, alpha, k, ask=FALSE, k.min=1, k.max=min(10, (ncol(
                            xx1 <- as.matrix(BetaRmean - Beta[, indCl])
                            xx2 <- as.matrix(Beta[, indCl] - BetaLmean)
 
-                           tempDist[.i] <- mean(colSums(apply(xx1, 2, function(.x) .x < 0))/lenP) +
-                                           mean(colSums(apply(xx2, 2, function(.x) .x < 0))/lenP)
+                           tempDist[.i] <- mean(c(colMeans(apply(xx1, 2, function(.x) .x < 0)), #+
+                                           colMeans(apply(xx2, 2, function(.x) .x < 0))))
                          }
 
-                         distance[pick] <- sum(tempDist*table(oc))/q
+                         distance[pick] <- sum(tempDist)#*table(oc))/q
                         }
-                        close(pb)
-
+                       if(trace) close(pb)
+# browser()
                         names(distance) <- k.min:k.max
+                        distance <- distance*k.min:k.max
+                        # if(distance[1] > 1.5*distance[2]) distance <- distance[-1]
+
                         tempIndex2 <- which.min(diff(distance))
                         as.integer(names(tempIndex2))})
     }
-  }else{
-    pick <- k
   }
-
   if(q != 2) abline(h=mean(c(max(ogg$height), rev(ogg$height), 0)[c(pick, (pick+1))]), col=2, lty=2)
   oc <- cutree(ogg, k=pick)
+
   num.clust <- length(unique(oc))
 
   Signif.interval <- NULL
@@ -230,8 +197,15 @@ clustEff <- function(Beta, p, alpha, k, ask=FALSE, k.min=1, k.max=min(10, (ncol(
     Signif.interval[, 1] <- apply(cbind(BetaLower[, 1], BetaUpper[, 1]), 1, prod)
   }
   if(plot){
-    matplot(p, Beta[, which(oc == 1)], type="l", col=1, lty=1, ylim=rangeBeta, lwd=.3, ylab="s(p)")
+    matplot(p, Beta[, which(oc == 1)], type="l", col=1, lty=2, ylim=rangeBeta, lwd=.8, xlab="", ylab="", axes=FALSE)
+    axis(1); axis(2); mtext(side=1, line=2, text="p"); mtext(side=2, line=2, text="s(p)")
     lines(p, BetaMedio[, 1], col=1, lwd=1)
+    if(!is.null(Beta.lower) & !is.null(Beta.upper)){
+      yy <- c(BetaLower[, 1], tail(BetaUpper[, 1], 1), rev(BetaUpper[, 1]), BetaLower[1, 1])
+      xx <- c(p, tail(p, 1), rev(p), p[1])
+      polygon(xx, yy, col = adjustcolor(1, alpha.f = 0.25), border = NA)
+      # matlines(p, cbind(Beta.lower[, 1], Beta.upper[, 1]), col=1, lty=1, lwd=1)
+    }
   }
   if(num.clust > 1){
     for(i in 2:num.clust){
@@ -242,14 +216,17 @@ clustEff <- function(Beta, p, alpha, k, ask=FALSE, k.min=1, k.max=min(10, (ncol(
         Signif.interval[, i] <- apply(cbind(BetaLower[, i], BetaUpper[, i]), 1, prod)
       }
       if(plot){
-        matlines(p, Beta[, which(oc == i)], col=i, lwd=.3, lty=i)
+        matlines(p, Beta[, which(oc == i)], col=i, lwd=.8, lty=2)
         lines(p, BetaMedio[, i], col=i, lwd=1)
+        if(!is.null(Beta.lower) & !is.null(Beta.upper)){
+          yy <- c(BetaLower[, i], tail(BetaUpper[, i], 1), rev(BetaUpper[, i]), BetaLower[1, i])
+          xx <- c(p, tail(p, 1), rev(p), p[1])
+          polygon(xx, yy, col = adjustcolor(i, alpha.f = 0.25), border = NA)
+          # matlines(p, cbind(BetaLower[, i], BetaUpper[, i]), col=i, lty=1, lwd=1)
+        }
       }
     }
   }
-
-  # BM <- apply(Beta, 1, mean)
-  # BDM <- colMeans(abs(Beta - BM))
 
   BetaDist <- sapply(1:num.clust, function(.i) abs(Beta[, oc == .i] - BetaMedio[, .i]), simplify=FALSE)
   idClust <- as.integer(names(which(table(oc) > 1)))
@@ -266,17 +243,23 @@ clustEff <- function(Beta, p, alpha, k, ask=FALSE, k.min=1, k.max=min(10, (ncol(
     tt <- which(oc == .i)
     tempcont <- NULL
     if(length(tt) == 1){
-      tempcont <- c(tempcont, 1)
+      tempcont <- c(tempcont, 0)
     }else{
       tempid <- combn(which(oc == .i), 2)
-      for(i in 1:ncol(tempid)) tempcont <- c(tempcont, 1-as.matrix(mat)[tempid[1, i], tempid[2, i]])
+      for(i in 1:ncol(tempid)) tempcont <- c(tempcont, as.matrix(mat)[tempid[1, i], tempid[2, i]])
     }
     tempcont
   }, simplify=FALSE)
 
-  if(plot & (length(BetaDistMedio) > 0)) boxplot(DissMedio, names=as.integer(names(table(oc))))#, ylim=c(0,1))
-  if(plot & (ncol(BetaMedio) > 1)) matplot(p, BetaMedio, type="l", lwd=1, ylab="s(p)")
-  if(plot) par(mfrow=c(1,1))
+  if(plot & (length(BetaDistMedio) > 0)){
+    boxplot(DissMedio, names=as.integer(names(table(oc))), ylab="", axes=FALSE)
+    axis(1, at=1:num.clust, labels=1:num.clust); axis(2); mtext(side=2, line=2, text="Dissimilarity")
+  }#, ylim=c(0,1))
+  if(plot & (ncol(BetaMedio) > 1)){
+    matplot(p, BetaMedio, type="l", lty=1, lwd=1, axes=FALSE, xlab="", ylab="")
+    axis(1); axis(2); mtext(side=1, line=2, text="p"); mtext(side=2, line=2, text="s(p)")
+  }
+  if(plot) par(mfrow=c(1,1), mar=c(5,4,4,2)+.1)
 
   nms <- colnames(Beta)
   if(is.null(nms)) nms <- paste0("X", 1:q)
@@ -284,11 +267,68 @@ clustEff <- function(Beta, p, alpha, k, ask=FALSE, k.min=1, k.max=min(10, (ncol(
   obj <- list(call=match.call(), X=Beta, X.mean=BetaMedio, X.mean.dist=BetaDistMedio, X.lower=Beta.lower,
               X.mean.lower=BetaLower, X.upper=Beta.upper, X.mean.upper=BetaUpper, Signif.interval=Signif.interval,
               k=pick, p=p, diss.matrix=mat, X.mean.diss=DissMedio, oggSilhouette=oggSil, oggHclust=ogg, clusters=oc,
-              alpha.dist=alphaDist, distance=distance, step=step, method=method, cut.method=cut.method,
+              #alpha.dist=alphaDist,
+              distance=distance, step=step, method=method, cut.method=cut.method,
               alpha=alpha)
   class(obj) <- "clustEff"
 
   return(obj)
+}
+
+#' @export
+distshape <- function(Beta, alpha=.5, step=c("both", "shape", "distance"), trace=TRUE){
+  if(!is.matrix(Beta)) Beta <- as.matrix(Beta)
+  n <- nrow(Beta)
+  q <- ncol(Beta)
+  p <- 1:n/n
+  step <- match.arg(step)
+  id <- combn(1:q, 2)
+  mat <- matrix(NA, q, q)
+  matDist <- matrix(NA, ncol(id), n)
+  alphaDist <- NULL
+
+  if(trace) cat("\nStep 1 (calculating alpha-percentiles): \n", sep="")
+  if(step != "shape"){
+    if(trace) pb <- txtProgressBar(min=0, max=ncol(id), style=3)
+    for(i in 1:ncol(id)){
+      if(trace) setTxtProgressBar(pb, i)
+      s11 <- Beta[, id[1, i]]
+      s22 <- Beta[, id[2, i]]
+      matDist[i, ] <- abs(s11-s22)
+    }
+    alphaDist <- apply(matDist, 2, function(.x) quantile(.x, alpha))
+  }else{
+    if(trace) pb <- txtProgressBar(min=0, max=1, style=3)
+    if(trace) setTxtProgressBar(pb, 1)
+  }
+  if(trace) close(pb)
+
+  if(trace) cat("Step 2 (calculating dissimilarity matrix): \n", sep="")
+  if(trace) pb <- txtProgressBar(min=0, max=ncol(id), style=3)
+  for(i in 1:ncol(id)){
+    if(trace) setTxtProgressBar(pb, i)
+    if(step != "distance"){
+      s1 <- splinefun(p, Beta[, id[1, i]])
+      s2 <- splinefun(p, Beta[, id[2, i]])
+      tem <- 1*I(sign(s1(p, deriv=2))*sign(s2(p, deriv=2)) == 1)
+      if(step != "both") tem2 <- 0
+    }
+
+    if(step != "shape"){
+      tem2 <- 1*I(matDist[i, ] <= alphaDist)
+      if(step != "both") tem <- 0
+    }
+
+    mat[id[1, i], id[2, i]] <- switch(step,
+                                      "both"=mean(tem & tem2),#mean(tem)*mean(tem2),#mean(tem & tem2),
+                                      "distance"=mean(tem2),
+                                      "shape"=mean(tem))
+  }
+  if(trace) close(pb)
+
+  mat <- 1-as.dist(t(mat))
+
+  return(mat)
 }
 
 #' @export
@@ -366,8 +406,8 @@ print.summary.clustEff <- function(x, digits=max(3L, getOption("digits") - 3L), 
 }
 
 #' @export
-plot.clustEff <- function(x, xvar=c("clusters", "dendrogram", "boxplot"), which, add=FALSE,
-                          all=FALSE, polygon=TRUE, dissimilarity=TRUE, ...){
+plot.clustEff <- function(x, xvar=c("clusters", "dendrogram", "boxplot", "numclust"), which, add=FALSE,
+                          all=TRUE, polygon=TRUE, dissimilarity=TRUE, ...){
   xvar = match.arg(xvar)
   if(!missing(which)){
     if(any(which <= 0) | any(which > x$k)){
@@ -382,10 +422,15 @@ plot.clustEff <- function(x, xvar=c("clusters", "dendrogram", "boxplot"), which,
            if(is.null(L$main)) L$main <- "Dendrogram"
            if(is.null(L$col)) L$col <- "red"
            if(is.null(L$xlab)) L$xlab <- ""
+           if(is.null(L$ylab)) L$ylab <- "Height"
            if(is.null(L$lty)) L$lty <- 2
+           if(is.null(L$mar)) L$mar <- c(2,3,4,1)+.1
+           par(mar=L$mar)
 
            # par(mfrow=c(1,1))
-           plot(x$oggHclust, main=L$main, xlab=L$xlab, ann=TRUE, sub="")
+           plot(x$oggHclust, main=L$main, xlab="", ylab="", ann=TRUE, sub="")
+           mtext(side=1, line=2, text=L$xlab)
+           mtext(side=2, line=2, text=L$ylab)
            abline(h=mean(c(max(x$oggHclust$height), rev(x$oggHclust$height), 0)[c(x$k, (x$k+1))]), col=L$col, lty=L$lty)
          },
          "clusters"={
@@ -410,11 +455,16 @@ plot.clustEff <- function(x, xvar=c("clusters", "dendrogram", "boxplot"), which,
            if(is.null(L$lty)){L$lty <- 1}
            # if(is.null(L$legend)) L$legend <- "topright"
            if(is.null(L$col)) L$col <- gray.colors(length(which))
+           if(all & !add) L$col <- L$col[2]
            if(length(L$col) == 1) L$col <- rep(L$col, length(which))
 
            if(length(which) == 1){
+             if(is.null(L$mar)) L$mar <- c(4,3.3,2,1)+.1
+             par(mar=L$mar)
+
              tempInd <- x$clusters == which
-             matplot(x$p, x$X[, tempInd], xlab=L$xlab, ylab=L$ylab, type=L$type, ylim=L$ylim, lwd=L$lwd[1], main=L$main, col=1, lty=L$lty)
+             matplot(x$p, x$X[, tempInd], xlab="", ylab="", type=L$type, ylim=L$ylim, lwd=L$lwd[1], main=L$main, col=1, lty=L$lty, axes=FALSE)
+             axis(1); axis(2); mtext(side=1, line=2, text=L$xlab); mtext(side=2, line=2, text=L$ylab)
              lines(x$p, x$X.mean[, which], lwd=L$lwd[2], col=2)
              # if(!is.null(x$X.lower) & !is.null(x$X.upper)){
              #   lines(x$p, x$X.mean.lower[, which], lwd=L$lwd[2], col=2, lty=2)
@@ -425,25 +475,29 @@ plot.clustEff <- function(x, xvar=c("clusters", "dendrogram", "boxplot"), which,
                  yy <- c(x$X.mean.lower[, which], tail(x$X.mean.upper[, which], 1), rev(x$X.mean.upper[, which]),
                          x$X.mean.lower[1, which])
                  xx <- c(x$p, tail(x$p, 1), rev(x$p), x$p[1])
-                 polygon(xx, yy, col = adjustcolor(L$col, alpha.f = 0.25), border = NA)
+                 polygon(xx, yy, col = adjustcolor(L$col[1], alpha.f = 0.25), border = NA)
                }else{
-                 points(x$p, x$X.mean.lower[, which], lty = 2, lwd = L$lwd[2], type = "l", col = 2)
-                 points(x$p, x$X.mean.upper[, which], lty = 2, lwd = L$lwd[2], type = "l", col = 2)
+                 points(x$p, x$X.mean.lower[, which], lty = 2, lwd = L$lwd[2], type = "l", col = L$col[1])
+                 points(x$p, x$X.mean.upper[, which], lty = 2, lwd = L$lwd[2], type = "l", col = L$col[1])
                }
              }
              abline(h=0, lty=3, col=1)
              # legend(L$legend, legend=colnames(x$X)[tempInd], bty="n", lty=seq(tempInd), col=1)
            }else{
-             matplot(x$p, x$X[, x$clusters == which[1]], xlab=L$xlab, ylab=L$ylab, type=L$type, ylim=L$ylim, lwd=L$lwd[1], main=L$main, col=L$col[1], lty=L$lty)
+             if(is.null(L$mar)) L$mar <- c(4,3.3,1,1)+.1
+             par(mar=L$mar)
+
+             matplot(x$p, x$X[, x$clusters == which[1]], xlab="", ylab="", type=L$type, ylim=L$ylim, lwd=L$lwd[1], main=L$main, col=L$col[1], lty=L$lty, axes=FALSE)
+             axis(1); axis(2); mtext(side=1, line=2, text=L$xlab); mtext(side=2, line=2, text=L$ylab)
              lines(x$p, x$X.mean[, which[1]], lwd=L$lwd[2], col=2)
              if(!is.null(x$X.lower) & !is.null(x$X.upper)){
               if(polygon){
                 yy <- c(x$X.mean.lower[, which[1]], tail(x$X.mean.upper[, which[1]], 1), rev(x$X.mean.upper[, which[1]]), x$X.mean.lower[1, which[1]])
                 xx <- c(x$p, tail(x$p, 1), rev(x$p), x$p[1])
-                polygon(xx, yy, col = adjustcolor(L$col, alpha.f = 0.25), border = NA)
+                polygon(xx, yy, col = adjustcolor(L$col[1], alpha.f = 0.25), border = NA)
               }else{
-                points(x$p, x$X.mean.lower[, which[1]], lty = 2, lwd = L$lwd[2], type = "l", col = 2)
-                points(x$p, x$X.mean.upper[, which[1]], lty = 2, lwd = L$lwd[2], type = "l", col = 2)
+                points(x$p, x$X.mean.lower[, which[1]], lty = 2, lwd = L$lwd[2], type = "l", col = L$col[1])
+                points(x$p, x$X.mean.upper[, which[1]], lty = 2, lwd = L$lwd[2], type = "l", col = L$col[1])
               }
              }
              abline(h=0, lty=3, col=1)
@@ -453,10 +507,10 @@ plot.clustEff <- function(x, xvar=c("clusters", "dendrogram", "boxplot"), which,
              #   lines(x$p, x$X.mean.upper[, which[1]], lwd=L$lwd[2], col=2, lty=2)
              # }
 
-
              for(i in 2:length(which)){
                if(!add){
-                 matplot(x$p, x$X[, x$clusters == which[i]], xlab=L$xlab, ylab=L$ylab, type=L$type, ylim=L$ylim, lwd=L$lwd[1], main=L$main, col=L$col[i], lty=L$lty)
+                 matplot(x$p, x$X[, x$clusters == which[i]], xlab="", ylab="", type=L$type, ylim=L$ylim, lwd=L$lwd[1], main=L$main, col=L$col[i], lty=L$lty, axes=FALSE)
+                 axis(1); axis(2); mtext(side=1, line=2, text=L$xlab); mtext(side=2, line=2, text=L$ylab)
                }else{
                  matlines(x$p, x$X[, x$clusters == which[i]], lwd=L$lwd[1], col=L$col[i], lty=L$lty)
                }
@@ -465,10 +519,10 @@ plot.clustEff <- function(x, xvar=c("clusters", "dendrogram", "boxplot"), which,
                  if(polygon){
                    yy <- c(x$X.mean.lower[, which[i]], tail(x$X.mean.upper[, which[i]], 1), rev(x$X.mean.upper[, which[i]]), x$X.mean.lower[1, which[i]])
                    xx <- c(x$p, tail(x$p, 1), rev(x$p), x$p[1])
-                   polygon(xx, yy, col = adjustcolor(L$col, alpha.f = 0.25), border = NA)
+                   polygon(xx, yy, col = adjustcolor(L$col[i], alpha.f = 0.25), border = NA)
                  }else{
-                   points(x$p, x$X.mean.lower[, which[i]], lty = 2, lwd = L$lwd[2], type = "l", col = 2)
-                   points(x$p, x$X.mean.upper[, which[i]], lty = 2, lwd = L$lwd[2], type = "l", col = 2)
+                   points(x$p, x$X.mean.lower[, which[i]], lty = 2, lwd = L$lwd[2], type = "l", col = L$col[i])
+                   points(x$p, x$X.mean.upper[, which[i]], lty = 2, lwd = L$lwd[2], type = "l", col = L$col[i])
                  }
                }
                # if(!is.null(x$X.lower) & !is.null(x$X.upper)){
@@ -483,19 +537,42 @@ plot.clustEff <- function(x, xvar=c("clusters", "dendrogram", "boxplot"), which,
            },
          "boxplot"={
            tabClust <- table(x$clusters)
+           k <- length(tabClust)
            X <- if(dissimilarity) x$X.mean.diss else x$X.mean.dist
 
-           if(is.null(L$main)) L$main <- "Average cluster distance"
+           if(is.null(L$main)) L$main <- "Average dissimilarity within cluster"
            if(is.null(L$labels)) L$labels <- as.integer(names(tabClust))[tabClust > 1]
-           if(is.null(L$ylab)) L$ylab <- "Distance"
+           if(is.null(L$ylab)) L$ylab <- "Dissimilarity"
            if(is.null(L$ylim)) L$ylim <- c(0, 1)
            if(!dissimilarity) L$ylim <- c(0, max(unlist(X)))
+           if(is.null(L$mar)) L$mar <- c(3.3,3.3,3.3,1)+.1
+           par(mar=L$mar)
 
            # par(mfrow=c(1,1))
            if(length(X) > 0){
-             boxplot(X, names=L$labels, ylim=L$ylim, main=L$main, ylab=L$ylab)
+             boxplot(X, names=L$labels, ylim=L$ylim, main=L$main, ylab="", axes=FALSE)
+             axis(1, at=1:k, labels=1:k); axis(2); mtext(side=2, line=2, text="Dissimilarity")
            }
+         },
+         "numclust"={
+           if(is.null(L$xlab)) L$xlab <- "N. of clusters"
+           if(is.null(L$ylab)) L$ylab <- expression(pi[out]^k-pi[out]^(k+1))
+           if(is.null(L$main)) L$main <- ""
+           if(is.null(L$lwd)) L$lwd <- 1
+           if(is.null(L$pch)) L$pch <- 19
+           if(is.null(L$type)) L$type <- "b"
+           if(is.null(L$col)) L$col <- 1
+           if(is.null(L$mar)) L$mar <- c(4,4,2,1)+.1
+           par(mar=L$mar)
+
+           plot(diff(x$distance), type=L$type, axes=FALSE, col=L$col, lwd=L$lwd, xlab="", ylab="", pch=L$pch)
+           axis(1, at=1:length(diff(x$distance)), labels=names(x$distance)[-1])
+           axis(2)
+           mtext(side=1, line=2, text=L$xlab)
+           mtext(side=2, line=2, text=L$ylab)
          })
+
+  par(mar=c(5,4,4,2)+.1)
 }
 
 #' @export
