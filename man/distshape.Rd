@@ -24,9 +24,11 @@ distshape(Beta, alpha=.5, step=c("both", "shape", "distance"), trace=TRUE)
   }
 }
 \value{
-The dissimilarity matri of class \dQuote{\code{dist}}.
+The dissimilarity matrix of class \dQuote{\code{dist}}.
 }
 \references{
+Sottile, G., Adelfio, G. Clusters of effects curves in quantile regression models. Comput Stat 34, 551–569 (2019). https://doi.org/10.1007/s00180-018-0817-8
+
 Sottile, G and Adelfio, G (2017). \emph{Clustering of effects through quantile regression}.
 Proceedings 32nd International Workshop of Statistical Modeling, Groningen (NL), vol.2 127-130, https://iwsm2017.webhosting.rug.nl/IWSM_2017_V2.pdf.
 
@@ -42,9 +44,28 @@ for summary and plotting.
 }
 \examples{
 
-  ##### Using simulated data in all examples
+set.seed(1234)
+n <- 300
+x <- 1:n/n
 
-  # see the documentation for 'clustEff-package'
+Y <- matrix(0, n, 30)
+
+sigma2 <- 4*pmax(x-.2, 0) - 8*pmax(x-.5, 0) + 4*pmax(x-.8, 0)
+
+mu <- sin(3*pi*x)
+for(i in 1:10) Y[, i] <- mu + rnorm(length(x), 0, pmax(sigma2, 0))
+
+mu <- cos(3*pi*x)
+for(i in 11:23) Y[,i] <- mu + rnorm(length(x), 0, pmax(sigma2,0))
+
+mu <- sin(3*pi*x)*cos(pi*x)
+for(i in 24:28) Y[, i] <- mu + rnorm(length(x), 0, pmax(sigma2, 0))
+
+mu <- 0 #sin(1/3*pi*x)*cos(2*pi*x)
+for(i in 29:30) Y[, i] <- mu + rnorm(length(x), 0, pmax(sigma2, 0))
+
+diss <- distshape(Y)
+diss
 
 }
 \keyword{models}

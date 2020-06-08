@@ -1,7 +1,7 @@
 \name{summary.clustEff}
 \alias{summary.clustEff}
 \title{
-Summary after Clustering Algorithm
+Summary clustEff algorithm
 }
 \description{
 Summary of an object of class \dQuote{\code{clustEff}}.
@@ -42,6 +42,6 @@ Gianluca Sottile \email{gianluca.sottile@unipa.it}
 
 # using simulated data
 
-# see the documentation for 'clustEff-package'
+# see the documentation for 'clustEff'
 
 }

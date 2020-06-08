@@ -26,9 +26,9 @@ A list of objects useful to run the cluster effect algorithm is created.
 
 \value{
   \item{p}{The percentiles used in  the quantile regression.}
-  \item{X}{A list containing as many matrices as covariates, where for each matrix the number of columns corresponds to the number of the responses. Each column of a matrix corresponds to one curve effect.}
-  \item{Xl}{A list as \kbd{X}. Each column of a matrix corresponds to the lower interval of the curve effect.}
-  \item{Xr}{A list as \kbd{X}. Each column of a matrix corresponds to the upper interval of the curve effect.}
+  \item{X}{A list containing as many matrices as covariates, where for each matrix the number of columns corresponds to the number of the responses. Each column of a matrix corresponds to one curve effect. In the case of a univariate model it is a unique matrix.}
+  \item{Xl}{A list as \kbd{X}. Each column of a matrix corresponds to the lower interval of the curve effect. In the case of a univariate model it is a unique matrix.}
+  \item{Xr}{A list as \kbd{X}. Each column of a matrix corresponds to the upper interval of the curve effect. In the case of a univariate model it is a unique matrix.}
 }
 
 \author{
@@ -42,6 +42,6 @@ Gianluca Sottile \email{gianluca.sottile@unipa.it}
 
 # using simulated data
 
-# see the documentation for 'clustEff-package'
+# see the documentation for 'clustEff'
 
 }

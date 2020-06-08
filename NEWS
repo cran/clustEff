@@ -1,0 +1,13 @@
+*********************************
+*                        	*
+*	Changes in clustEff	*
+*                          	*
+*********************************
+
+===============
+version 0.2.0
+===============
+* New implementation of FPCAC algorithm and different S3 methods for this specific class (fpcac).
+* New changes in the main algorithm clustEff. Now clustEff is much stabler and faster.
+* New changes in the plot.clustEff, summary.clustEff.
+* Some bugs fixed.
