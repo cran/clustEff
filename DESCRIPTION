@@ -1,7 +1,7 @@
 Package: clustEff
 Type: Package
 Title: Clusters of Effects Curves in Quantile Regression Models
-Version: 0.2.0
+Version: 0.3.0
 Authors@R: c(person("Gianluca", "Sottile", role = c("aut", "cre"),
 		     email = "gianluca.sottile@unipa.it"),
 		     person("Giada", "Adelfio", role = "aut",
@@ -10,12 +10,11 @@ Description: Clustering method to cluster both effects curves, through quantile 
 Depends: qrcm, cluster, fda, ggpubr, ggplot2
 License: GPL-2
 Encoding: UTF-8
-LazyData: true
-RoxygenNote: 7.1.0
+RoxygenNote: 7.2.0
 NeedsCompilation: no
-Packaged: 2020-06-08 14:25:36 UTC; gianlucasottile
+Packaged: 2022-06-28 08:06:20 UTC; gianlucasottile
 Author: Gianluca Sottile [aut, cre],
   Giada Adelfio [aut]
 Maintainer: Gianluca Sottile <gianluca.sottile@unipa.it>
 Repository: CRAN
-Date/Publication: 2020-06-08 15:00:15 UTC
+Date/Publication: 2022-06-28 11:50:02 UTC

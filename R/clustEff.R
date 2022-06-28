@@ -790,7 +790,7 @@ print.summary.fpcac <- function(x, digits=max(3L, getOption("digits") - 3L), ...
 }
 
 #' @export
-plot.fpcac <- function(x, which, polygon=TRUE, ...){
+plot.fpcac <- function(x, which, polygon=TRUE, conf.level, ...){
   if(!missing(which)){
     if(any(which <= 0) | any(which > x$k)){
       stop("Which values in 1-", x$k)
@@ -800,6 +800,12 @@ plot.fpcac <- function(x, which, polygon=TRUE, ...){
   x$k <- nrow(x$centers)
   x$p <- seq_len(nrow(x$X.mean))
   L <- list(...)
+
+  if(!missing(conf.level)){
+    a <- (1 - conf.level)/2; a <- c(a, 1 - a)
+    x$X.mean.lower <- sapply(1:x$k, function(i) apply(x$Xorig[, x$clusters == i, drop = FALSE], 1, quantile, probs = a[1]))
+    x$X.mean.upper <- sapply(1:x$k, function(i) apply(x$Xorig[, x$clusters == i, drop = FALSE], 1, quantile, probs = a[2]))
+  }
 
   if(missing(which)) which <- seq(x$k)
   yRange <- range(x$X.mean[,  which])
@@ -824,7 +830,7 @@ plot.fpcac <- function(x, which, polygon=TRUE, ...){
     par(mar=L$mar)
 
     tempInd <- x$clusters == which
-    matplot(x$p, x$X[, tempInd], xlab="", ylab="", type=L$type, ylim=L$ylim, lwd=L$lwd[1], main=L$main, col=L$col[1], lty=L$lty[2], axes=FALSE)
+    matplot(x$p, x$Xorig[, tempInd, drop = FALSE], xlab="", ylab="", type=L$type, ylim=L$ylim, lwd=L$lwd[1], main=L$main, col=L$col[1], lty=L$lty[2], axes=FALSE)
     axis(1); axis(2); mtext(side=1, line=2, text=L$xlab); mtext(side=2, line=2, text=L$ylab)
     lines(x$p, x$X.mean[, which], lwd=L$lwd[2], col=L$col[1], lty = L$lty[1])
 
@@ -838,7 +844,7 @@ plot.fpcac <- function(x, which, polygon=TRUE, ...){
         points(x$p, x$X.mean.lower[, which], lty = 2, lwd = L$lwd[2], type = "l", col = L$col[1])
         points(x$p, x$X.mean.upper[, which], lty = 2, lwd = L$lwd[2], type = "l", col = L$col[1])
       }
-      matlines(x$p, x$X[, tempInd], xlab="", ylab="", type=L$type, ylim=L$ylim, lwd=L$lwd[1], main=L$main, col=L$col[1], lty=L$lty[2], axes=FALSE)
+      matlines(x$p, x$Xorig[, tempInd, drop = FALSE], xlab="", ylab="", type=L$type, ylim=L$ylim, lwd=L$lwd[1], main=L$main, col=L$col[1], lty=L$lty[2], axes=FALSE)
       lines(x$p, x$X.mean[, which], lwd=L$lwd[2], col=L$col[1], lty = L$lty[1])
     }
 
@@ -896,7 +902,8 @@ opt.fpcac <- function(X, k.max = 5, method = c("silhouette", "wss"),
   if(is.null(diss)) {
     v <- NULL
     for(i in 1:nfolds) {
-      diss <- dist(objTemp[[1]]$X[foldid == i, ])
+      # diss <- dist(objTemp[[1]]$X[foldid == i, ])
+      diss <- as.dist(sqrt(2*(1-cor(t(objTemp[[1]]$X[foldid == i, ])))))
       temp <- if (method == "silhouette")
         c(0, apply(clusters[foldid == i, -1], 2, .get_ave_sil_width, d=diss))
       else

@@ -11,8 +11,8 @@ This package implements a general algorithm to cluster coefficient functions (i.
 \tabular{ll}{
 Package: \tab clustEff\cr
 Type: \tab Package\cr
-Version: \tab 0.2.0\cr
-Date: \tab 2020-05-31\cr
+Version: \tab 0.3.0\cr
+Date: \tab 2022-06-28\cr
 License: \tab GPL-2\cr
 }
 The function \code{\link{clustEff}} allows to specify the type of the curves to apply the proposed clustering algorithm. The function \code{\link{extract.object}}  extracts the matrices, in case of multivariate response, through the quantile regression coefficient modeling, useful to run the main algorithm.  The auxiliary functions \code{\link{summary.clustEff}} and \code{\link{plot.clustEff}} can be used to extract information from the main algorithm. In the new version of the package you can also find a PCA-based clustering approach called Functional Principal Components Analysis Clustering (FPCAC). Main function of this algorithm is \code{\link{fpcac}}, and some auxiliary functions are \code{\link{summary.fpcac}} and \code{\link{plot.fpcac}}.
@@ -36,18 +36,29 @@ Adelfio, G., Chiodi, M., D'Alessandro, A. and Luzio, D. (2011) \emph{FPCA algori
 \examples{
 
 # Main functions:
-\donttest{
-clustEff(Beta, Beta.lower = NULL, Beta.upper = NULL,
-         k = c(2, min(5, (ncol(Beta)-1))), ask = FALSE, diss.mat, alpha = .5,
-         step = c("both", "shape", "distance"),
-         cut.method = c("mindist", "length", "conf.int"),
-         method = "ward.D2", approx.spline = FALSE, nbasis = 50,
-         conf.level = 0.95, stand = FALSE, plot = TRUE, trace = TRUE)
+set.seed(1234)
+n <- 300
+x <- 1:n/n
 
-fpcac(X, K = 2, fd = NULL, nbasis = 5, norder = 3, nharmonics = 3,
-      alpha = 0, niter = 30, Ksteps = 25, conf.level = 0.95, seed, disp = FALSE)
-}
+Y <- matrix(0, n, 30)
 
+sigma2 <- 4*pmax(x-.2, 0) - 8*pmax(x-.5, 0) + 4*pmax(x-.8, 0)
+
+mu <- sin(3*pi*x)
+for(i in 1:10) Y[, i] <- mu + rnorm(length(x), 0, pmax(sigma2, 0))
+
+mu <- cos(3*pi*x)
+for(i in 11:23) Y[,i] <- mu + rnorm(length(x), 0, pmax(sigma2,0))
+
+mu <- sin(3*pi*x)*cos(pi*x)
+for(i in 24:28) Y[, i] <- mu + rnorm(length(x), 0, pmax(sigma2, 0))
+
+mu <- 0 #sin(1/3*pi*x)*cos(2*pi*x)
+for(i in 29:30) Y[, i] <- mu + rnorm(length(x), 0, pmax(sigma2, 0))
+
+clustEff(Y)
+
+fpcac(Y, K = opt.fpcac(Y)$K.opt)
 }
 
 
