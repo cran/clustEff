@@ -1,36 +1,25 @@
-citHeader("To cite clustEff or fpcac in publications use:")
-
-citEntry(entry = "Article",
+bibentry(bibtype = "Article",
   title        = "Clusters of effects curves in quantile regression models",
-  author       = personList(as.person("Gianluca Sottile"),
-                   as.person("Giada Adelfio")),
+  author       = c(person(given = "Gianluca", family = "Sottile"),
+                   person(given = "Giada", family = "Adelfio")),
   journal      = "Computational Statistics",
   year         = "2019",
   volume       = "34",
   pages        = "551–569",
-  doi 	       = "10.1007/s00180-018-0817-8",
-
-  textVersion  =
-  paste("Gianluca Sottile, Giada Adelfio (2019).",
-        "Clusters of effects curves in quantile regression models.",
-        "Computational Statistics, 34, 551-569.",
-        "doi:10.1007/s00180-018-0817-8.")
+  doi          = "10.1007/s00180-018-0817-8",
+  header       = "To cite clustEff in publications use:"
 )
 
-citEntry(entry = "Article",
+bibentry(bibtype = "Article",
   title        = "FPCA Algorithm For Waveform Clustering",
-  author       = personList(as.person("Dario Luzio"),
-                   as.person("Marcello Chiodi"), 
-		   as.person("Giada Adelfio"),
-		   as.person("Antonino D'Alessandro")),
+  author       = c(person(given = "Dario", family = "Luzio"),
+                   person(given = "Marcello", family = "Chiodi"),
+                   person(given = "Giada", family = "Adelfio"),
+                   person(given = "Antonino", family = "D'Alessandro")),
   journal      = "Journal of Communication and Computer",
   year         = "2011",
   volume       = "8",
   pages        = "494-502",
-
-  textVersion  =
-  paste("Dario Luzio, Marcello Chiodi, Giada Adelfio, Antonino D'Alessandro (2011).",
-        "FPCA Algorithm For Waveform Clustering.",
-        "Journal of Communication and Computer, 8, 494-502.")
+  doi          = "10.1007/s00180-018-0817-8",
+  header       = "To cite focaccia in publications use:"
 )
-

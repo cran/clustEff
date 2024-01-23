@@ -1,10 +1,10 @@
-3b15925e6ca5c0a4cc7ce526c5943436 *DESCRIPTION
+d1aa1356cdbfb21ce0c1efceb2402fa3 *DESCRIPTION
 cd94442fed7920706b4a6b0e34fb9652 *NAMESPACE
 39915adc16eb9cf0392d0b4be4c30dd1 *NEWS
-9deec34f8be078f8aa97fe8a0aca45bf *R/clustEff.R
-f633333db895cf230fdc06ab4ddce10a *inst/CITATION
-82914ea9c08d3a6c6f8655d08f69227c *man/clustEff-internal.Rd
-7b18b748c7c9253193830bf917153c0b *man/clustEff-package.Rd
+e6b9ae14d2a574ff621169f9465bdcbc *R/clustEff.R
+acfdeaa1c13232d471e1e32bfb2f7f6c *inst/CITATION
+5064cd20b0af831e834c889715c4ac5b *man/clustEff-internal.Rd
+938715cafcc8406f5be9fa5785d9697b *man/clustEff-package.Rd
 dfefe2796a7fee838e4f39735d1e2029 *man/clustEff.Rd
 9aa28fdc5d39cb8818ea00c8033b357e *man/distshape.Rd
 7c28cb572b7a0b1b9e727449241ef9db *man/extract.object.Rd

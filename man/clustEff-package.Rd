@@ -11,8 +11,8 @@ This package implements a general algorithm to cluster coefficient functions (i.
 \tabular{ll}{
 Package: \tab clustEff\cr
 Type: \tab Package\cr
-Version: \tab 0.3.0\cr
-Date: \tab 2022-06-28\cr
+Version: \tab 0.3.1\cr
+Date: \tab 2024-01-22\cr
 License: \tab GPL-2\cr
 }
 The function \code{\link{clustEff}} allows to specify the type of the curves to apply the proposed clustering algorithm. The function \code{\link{extract.object}}  extracts the matrices, in case of multivariate response, through the quantile regression coefficient modeling, useful to run the main algorithm.  The auxiliary functions \code{\link{summary.clustEff}} and \code{\link{plot.clustEff}} can be used to extract information from the main algorithm. In the new version of the package you can also find a PCA-based clustering approach called Functional Principal Components Analysis Clustering (FPCAC). Main function of this algorithm is \code{\link{fpcac}}, and some auxiliary functions are \code{\link{summary.fpcac}} and \code{\link{plot.fpcac}}.

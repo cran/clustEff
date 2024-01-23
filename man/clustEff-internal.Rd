@@ -1,5 +1,13 @@
 \name{internals}
 \alias{internals}
+
+\alias{.get_ave_sil_width}
+\alias{.get_withinSS}
+\alias{print.clustEff}
+\alias{print.summary.clustEff}
+\alias{print.fpcac}
+\alias{print.summary.fpcac}
+
 \title{Internal Functions}
 \description{
 Functions for internal use only, or not yet documented.

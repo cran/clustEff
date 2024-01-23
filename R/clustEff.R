@@ -253,7 +253,10 @@ distshape <- function(Beta, alpha=.5, step=c("both", "shape", "distance"), trace
   }
   if(trace) close(pb)
 
-  mat[t(id)] <- .5*(colMeans(matDist) + colMeans(matShape))
+  mat[t(id)] <- switch(step,
+                       "both" = .5*(colMeans(matDist) + colMeans(matShape)),
+                       "distance" = colMeans(matDist),
+                       "shape" = colMeans(matShape))
   mat <- 1 - as.dist(t(mat))
 
   return(mat)
